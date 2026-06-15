@@ -327,11 +327,17 @@
     gap: 0.5rem;
   }
   
-  .meta-left {
+  .meta-left, .meta-right {
+    flex-direction: column;
+    gap: 0.5rem;
     width: 100%;
   }
   
-  .meta-right {
+  .meta-item {
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+    word-break: break-word;
     width: 100%;
   }
 }
