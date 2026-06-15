@@ -318,3 +318,20 @@
   background: rgba(100, 116, 139, 0.15) !important;
   color: var(--color-text) !important;
 }
+
+/* 모바일: post-meta 줄바꿈 */
+@media (max-width: 600px) {
+  .post-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .meta-left {
+    width: 100%;
+  }
+  
+  .meta-right {
+    width: 100%;
+  }
+}
