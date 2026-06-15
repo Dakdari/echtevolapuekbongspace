@@ -169,7 +169,10 @@ export const getRecentPostsByBoard = async (boardId: string, limitCount = 5): Pr
 };
 
 export const createPost = async (
-  postData: Omit<Post, 'id' | 'postId' | 'createdAt' | 'likes' | 'dislikes' | 'views' | 'commentCount'>
+  postData: Omit<Post, 'id' | 'postId' | 'createdAt' | 'likes' | 'dislikes' | 'views' | 'commentCount'>,
+  // MIGRATION TEMP: Allow custom createdAt for legacy content migration from volapuek.bonghwang.space
+  // Remove this parameter after migration is complete (see commit message for details)
+  customCreatedAt?: any
 ) => {
   const counterRef = doc(db, 'counters', `board_${postData.boardId}`);
   const postRef = doc(collection(db, 'posts'));
@@ -211,7 +214,8 @@ export const createPost = async (
       dislikes: 0,
       views: 0,
       commentCount: 0,
-      createdAt: serverTimestamp(),
+      // MIGRATION TEMP: Use customCreatedAt if provided (for legacy content), otherwise use server timestamp
+      createdAt: customCreatedAt ?? serverTimestamp(),
     };
 
     if (postData.authorPassword) {
