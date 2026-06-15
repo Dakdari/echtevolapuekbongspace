@@ -1,0 +1,42 @@
+.footer-page-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+.footer-page-card {
+  padding: 2.5rem;
+  border-radius: var(--radius-lg);
+}
+
+.footer-page-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.footer-page-content {
+  line-height: 1.8;
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.footer-page-content h1,
+.footer-page-content h2,
+.footer-page-content h3 {
+  color: var(--color-text);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.footer-page-content img {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.footer-page-content a {
+  color: var(--color-primary);
+}

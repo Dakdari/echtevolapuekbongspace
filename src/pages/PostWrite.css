@@ -1,0 +1,128 @@
+/* 말머리 선택 버튼 */
+.prefix-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+.prefix-btn {
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+.prefix-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.prefix-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+  font-weight: 700;
+}
+.title-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.title-input-row .form-input { flex: 1; }
+
+
+.post-write-container {
+  animation: fadeIn var(--transition-normal);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.post-write-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.form-input {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); /* Phoenix Red shadow */
+}
+
+/* React Quill Theme Customizations */
+.quill-wrapper {
+  margin-bottom: 2rem;
+}
+
+.quill-editor .ql-toolbar {
+  border-color: var(--color-border);
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+  background-color: var(--color-bg-secondary);
+}
+
+.quill-editor .ql-container {
+  border-color: var(--color-border);
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  background-color: var(--color-bg);
+  min-height: 400px;
+  font-size: 1rem;
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+.quill-editor .ql-stroke {
+  stroke: var(--color-text);
+}
+.quill-editor .ql-fill {
+  fill: var(--color-text);
+}
+.quill-editor .ql-picker-label {
+  color: var(--color-text);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}

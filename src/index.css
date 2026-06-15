@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import './styles/variables.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Global rule for stickers in any editor or post body */
+img[data-sticker],
+img.post-sticker,
+.ql-editor img[data-sticker],
+.ql-editor img.post-sticker,
+.post-body img[data-sticker],
+.post-body img.post-sticker {
+  max-width: 80px !important;
+  max-height: 80px !important;
+  width: auto !important;
+  height: auto !important;
+  display: inline-block !important;
+  border-radius: 6px;
+  vertical-align: middle;
+  object-fit: contain;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+}
+
+/* Prevent image overflow in notices and custom widgets */
+.board-notice img,
+.custom-widget img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Common Layout */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.page-wrapper {
+  padding-top: 5rem; /* Space for navbar */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

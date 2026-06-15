@@ -1,0 +1,101 @@
+.market-container {
+  animation: fadeIn var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.market-header {
+  padding: 2rem;
+  text-align: center;
+}
+
+.market-desc {
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.user-odong-info {
+  display: inline-block;
+  background-color: var(--color-bg);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-primary);
+  font-size: 1.125rem;
+  color: var(--color-text);
+}
+
+.user-odong-info strong {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+}
+
+.login-prompt {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.stickers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.sticker-card {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform var(--transition-fast);
+}
+
+.sticker-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+}
+
+.sticker-image-wrapper {
+  width: 100%;
+  aspect-ratio: 1;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sticker-image {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.sticker-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.sticker-buy-section {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.sticker-price {
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
