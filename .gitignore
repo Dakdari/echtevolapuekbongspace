@@ -17,6 +17,9 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Migration scripts - sensitive data
+scripts/serviceAccountKey.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
