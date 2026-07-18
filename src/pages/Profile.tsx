@@ -4,6 +4,7 @@ import useAuthStore from '../store/useAuthStore';
 import { updateUserNickname } from '../lib/api';
 import { getSiteSettings } from '../lib/adminApi';
 import type { SiteSettings, MarketItem } from '../lib/adminApi';
+import { isValidNickname } from '../utils/nickname';
 import { User, Coins, Settings, LogOut, Save } from 'lucide-react';
 import './Profile.css';
 
@@ -27,6 +28,7 @@ const Profile: React.FC = () => {
 
   const handleSaveNickname = async () => {
     if (!nickname.trim()) return alert('닉네임을 입력해주세요.');
+    if (!isValidNickname(nickname)) return alert('닉네임에는 영문, 숫자, 한글, 한자, 가나만 사용할 수 있습니다.');
     if (nickname === profile.nickname) {
       setIsEditing(false);
       return;
@@ -38,9 +40,13 @@ const Profile: React.FC = () => {
       updateProfile({ nickname });
       setIsEditing(false);
       alert('닉네임이 변경되었습니다.');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('닉네임 변경에 실패했습니다.');
+      if (error.message === 'INVALID_NICKNAME') {
+        alert('닉네임에는 영문, 숫자, 한글, 한자, 가나만 사용할 수 있습니다.');
+      } else {
+        alert('닉네임 변경에 실패했습니다.');
+      }
     } finally {
       setSubmitting(false);
     }

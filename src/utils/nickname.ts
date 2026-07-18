@@ -12,3 +12,9 @@ export function getAnonNickname(index: number, suffix: string = '봉군'): strin
   
   return res + suffix;
 }
+
+export function isValidNickname(nickname: string): boolean {
+  // 영문(diacritic 포함), 숫자, 한글, 한자, 가나, 공백만 허용
+  const regex = /^[\p{Script=Latin}\p{Script=Hangul}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}0-9\s]+$/u;
+  return regex.test(nickname);
+}

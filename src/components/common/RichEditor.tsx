@@ -13,6 +13,27 @@ const FontStyle = Quill.import('attributors/style/font') as any;
 FontStyle.whitelist = ['sans-serif', 'serif', 'monospace', 'Noto Sans KR', 'Nanum Gothic', 'Nanum Myeongjo'];
 Quill.register(FontStyle, true);
 
+const BlockEmbed = Quill.import('blots/block/embed') as any;
+class CustomVideoBlot extends BlockEmbed {
+  static create(value: string) {
+    let node = super.create();
+    node.setAttribute('src', value);
+    node.setAttribute('frameborder', '0');
+    node.setAttribute('allowfullscreen', 'true');
+    return node;
+  }
+  static formats(node: HTMLElement) {
+    return node.getAttribute('src');
+  }
+  static value(node: HTMLElement) {
+    return node.getAttribute('src');
+  }
+}
+CustomVideoBlot.blotName = 'video';
+CustomVideoBlot.tagName = 'iframe';
+CustomVideoBlot.className = 'ql-video';
+Quill.register(CustomVideoBlot, true);
+
 interface RichEditorProps {
   value: string;
   onChange: (content: string) => void;
@@ -95,9 +116,8 @@ const RichEditor: React.FC<RichEditorProps> = ({ value, onChange, placeholder, m
     };
   }, []);
 
-  // 비디오 핸들러: disableVideo=true이면 삽입 차단, false이면 URL 입력 받아 iframe으로 직접 삽입
-  // insertEmbed('video') 는 react-quill-new에서 링크로 잘못 삽입되는 버그가 있어
-  // dangerouslyPasteHTML로 iframe 태그를 직접 주입함
+  // 비디오 핸들러: disableVideo=true이면 삽입 차단, false이면 URL 입력 받아 iframe으로 삽입
+  // 커스텀 VideoBlot을 등록했으므로 insertEmbed를 사용해 올바른 iframe 태그가 생성됨
   const videoHandler = useCallback(() => {
     if (disableVideo) {
       alert('게시글에는 iframe 및 비디오를 삽입할 수 없습니다.');
@@ -108,13 +128,8 @@ const RichEditor: React.FC<RichEditorProps> = ({ value, onChange, placeholder, m
     const quill = quillRef.current?.getEditor();
     if (quill) {
       const range = quill.getSelection(true);
-      // video blot 대신 iframe HTML을 직접 주입
-      quill.clipboard.dangerouslyPasteHTML(
-        range.index,
-        `<iframe class="ql-video" src="${url.trim()}" frameborder="0" allowfullscreen="true"></iframe>`
-      );
-      // iframe 이후 커서 이동
-      setTimeout(() => quill.setSelection(range.index + 1, 0), 0);
+      quill.insertEmbed(range.index, 'video', url.trim());
+      quill.setSelection(range.index + 1, 0);
     }
   }, [disableVideo]);
 

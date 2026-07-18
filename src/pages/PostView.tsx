@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MessageSquare, ThumbsUp, ThumbsDown, Eye, Clock, User, ExternalLink } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import useAuthStore from '../store/useAuthStore';
-import { getAnonNickname } from '../utils/nickname';
+import { getAnonNickname, isValidNickname } from '../utils/nickname';
 import { getPost, votePost, getComments, createComment, getBoards, deletePost, deleteComment } from '../lib/api';
 import type { Post, Comment, Board } from '../lib/api';
 import { getSiteSettings, getBoardSettings } from '../lib/adminApi';
@@ -84,11 +84,17 @@ const PostView: React.FC = () => {
     }
     if (!post || !post.id) return;
 
+    const finalAnonName = anonNickname.trim() || nextAnonName;
+    if (!user && !isValidNickname(finalAnonName)) {
+      alert('닉네임에는 영문, 숫자, 한글, 한자, 가나만 사용할 수 있습니다.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await createComment(post.id, {
         authorUid: user ? user.uid : null,
-        authorName: user && profile ? profile.nickname : (anonNickname.trim() || nextAnonName),
+        authorName: user && profile ? profile.nickname : finalAnonName,
         authorPassword: user ? undefined : anonPassword,
         content: commentText,
       });
@@ -275,7 +281,10 @@ const PostView: React.FC = () => {
           </h1>
           <div className="post-meta">
             <div className="meta-left">
-              <span className="meta-item"><User size={16} /> {post.authorName}</span>
+              <span className="meta-item">
+                <User size={16} /> {post.authorName}
+                {post.authorRole === 'admin' && <span title="관리자"> 🦅</span>}
+              </span>
               <span className="meta-item"><Clock size={16} /> {postDateStr}</span>
             </div>
             <div className="meta-right">
@@ -327,7 +336,10 @@ const PostView: React.FC = () => {
                 <li key={c.id} className="comment-item">
                   <div className="comment-header">
                     <div className="comment-header-left">
-                      <span className="comment-author">{c.authorName}</span>
+                      <span className="comment-author">
+                        {c.authorName}
+                        {c.authorRole === 'admin' && <span title="관리자"> 🦅</span>}
+                      </span>
                       <span className="comment-time">{commentDateStr}</span>
                     </div>
                     {(profile?.role === 'admin' || user?.uid === c.authorUid || (!c.authorUid && c.authorPassword)) && (

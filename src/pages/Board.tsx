@@ -113,7 +113,10 @@ const Board: React.FC = () => {
           <span className="comment-count">[{post.commentCount}]</span>
         )}
       </Link>
-      <span className="col-author">{post.authorName}</span>
+      <span className="col-author">
+        {post.authorName}
+        {post.authorRole === 'admin' && <span title="관리자"> 🦅</span>}
+      </span>
       <span className="col-time">{formatDate(post.createdAt)}</span>
       <span className="col-views">{post.views}</span>
       <span className="col-likes">{post.likes}</span>

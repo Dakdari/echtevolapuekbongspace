@@ -5,7 +5,7 @@ import useSettingsStore from '../store/useSettingsStore';
 import { createPost, updatePost, getPost } from '../lib/api';
 import { getSiteSettings, getBoardSettings } from '../lib/adminApi';
 import type { SiteSettings, BoardSettings } from '../lib/adminApi';
-import { getAnonNickname } from '../utils/nickname';
+import { getAnonNickname, isValidNickname } from '../utils/nickname';
 import { hashPassword } from '../utils/crypto';
 import RichEditor from '../components/common/RichEditor';
 import NotFound from '../components/common/NotFound';
@@ -131,6 +131,10 @@ const PostWrite: React.FC = () => {
     }
     if (!user && (!nickname.trim() || !password)) {
       alert('비회원은 게시글 수정/삭제를 위한 비밀번호를 입력해야 합니다.');
+      return;
+    }
+    if (!user && !isValidNickname(nickname.trim())) {
+      alert('닉네임에는 영문, 숫자, 한글, 한자, 가나만 사용할 수 있습니다.');
       return;
     }
     if (!boardId) return;

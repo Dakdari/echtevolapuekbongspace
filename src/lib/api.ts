@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { getBadWords, filterBadWords } from '../utils/filter';
 import { generateSalt, hashPassword } from '../utils/crypto';
+import { isValidNickname } from '../utils/nickname';
 
 export interface Board {
   id: string;
@@ -43,6 +44,7 @@ export interface Post {
   content: string;
   authorUid: string | null;
   authorName: string;
+  authorRole?: string;
   authorPassword?: string;
   authorSalt?: string;
   likes: number;
@@ -58,6 +60,7 @@ export interface Comment {
   postId: string;
   authorUid: string | null;
   authorName: string;
+  authorRole?: string;
   authorPassword?: string;
   authorSalt?: string;
   content: string;
@@ -202,8 +205,17 @@ export const createPost = async (
       transaction.set(counterRef, { lastPostId: nextPostId });
     }
 
+    let authorRole: string | undefined;
+    if (postData.authorUid) {
+      const userDoc = await transaction.get(doc(db, 'users', postData.authorUid));
+      if (userDoc.exists() && userDoc.data().role === 'admin') {
+        authorRole = 'admin';
+      }
+    }
+
     const newPost: any = {
       ...postData,
+      authorRole,
       title: titleFilter.filteredText,
       content: contentFilter.filteredText,
       postId: nextPostId,
@@ -403,13 +415,19 @@ export const createComment = async (
   const odong = settingsDoc.exists() ? (settingsDoc.data().odongPerComment ?? 5) : 5;
 
   await runTransaction(db, async (t) => {
+    let authorRole: string | undefined;
     if (commentData.authorUid) {
+      const userDoc = await t.get(doc(db, 'users', commentData.authorUid));
+      if (userDoc.exists() && userDoc.data().role === 'admin') {
+        authorRole = 'admin';
+      }
       t.update(doc(db, 'users', commentData.authorUid), { odong: increment(odong) });
     }
     t.update(postRef, { commentCount: increment(1) });
     
     const newComment: any = {
       ...commentData,
+      authorRole,
       content: contentFilter.filteredText,
       postId: postDocId,
       likes: 0,
@@ -458,6 +476,9 @@ export const getActiveAds = async (): Promise<AdBanner[]> => {
 };
 
 export const updateUserNickname = async (uid: string, nickname: string) => {
+  if (!isValidNickname(nickname)) {
+    throw new Error('INVALID_NICKNAME');
+  }
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, { nickname });
 };
