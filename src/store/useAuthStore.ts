@@ -49,11 +49,17 @@ const useAuthStore = create<AuthState>((set) => ({
       let profile: UserProfile;
 
       if (!userSnap.exists()) {
-        // Create new user profile
+        // Create new user profile with random stems nickname '봉황nnnnnnn'
+        const stems = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
+        let randomStems = '';
+        for (let i = 0; i < 7; i++) {
+          randomStems += stems[Math.floor(Math.random() * stems.length)];
+        }
+        
         profile = {
           uid: user.uid,
           email: user.email,
-          nickname: user.displayName || '회원',
+          nickname: `봉황${randomStems}`,
           odong: 0,
           role: user.email === 'jusigmaeniae1@gmail.com' ? 'admin' : 'user',
           isBanned: false,
