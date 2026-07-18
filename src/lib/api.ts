@@ -198,19 +198,20 @@ export const createPost = async (
 
   await runTransaction(db, async (transaction) => {
     const counterDoc = await transaction.get(counterRef);
-    const nextPostId = counterDoc.exists() ? (counterDoc.data().lastPostId || 0) + 1 : 1;
-    if (counterDoc.exists()) {
-      transaction.update(counterRef, { lastPostId: nextPostId });
-    } else {
-      transaction.set(counterRef, { lastPostId: nextPostId });
-    }
-
+    
     let authorRole: string | undefined;
     if (postData.authorUid) {
       const userDoc = await transaction.get(doc(db, 'users', postData.authorUid));
       if (userDoc.exists() && userDoc.data().role === 'admin') {
         authorRole = 'admin';
       }
+    }
+
+    const nextPostId = counterDoc.exists() ? (counterDoc.data().lastPostId || 0) + 1 : 1;
+    if (counterDoc.exists()) {
+      transaction.update(counterRef, { lastPostId: nextPostId });
+    } else {
+      transaction.set(counterRef, { lastPostId: nextPostId });
     }
 
     const newPost: any = {
