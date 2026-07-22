@@ -12,6 +12,7 @@ import {
   query,
   orderBy,
   where,
+  runTransaction,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { AdBanner } from './api';
@@ -228,6 +229,8 @@ export interface UserRecord {
   role: 'admin' | 'user';
   odong: number;
   isBanned: boolean;
+  banUntil?: number | null;
+  appealStatus?: 'none' | 'pending' | 'rejected';
   purchasedStickers?: string[];
 }
 
@@ -240,6 +243,8 @@ export const getUsers = async (): Promise<UserRecord[]> => {
     role: d.data().role || 'user',
     odong: d.data().odong || 0,
     isBanned: d.data().isBanned || false,
+    banUntil: d.data().banUntil || null,
+    appealStatus: d.data().appealStatus || 'none',
     purchasedStickers: d.data().purchasedStickers || [],
   }));
 };
@@ -248,8 +253,38 @@ export const updateUserRole = async (uid: string, role: 'admin' | 'user') => {
   await updateDoc(doc(db, 'users', uid), { role });
 };
 
-export const toggleUserBan = async (uid: string, isBanned: boolean) => {
-  await updateDoc(doc(db, 'users', uid), { isBanned });
+export const updateUserBan = async (uid: string, isBanned: boolean, banUntil: number | null) => {
+  await updateDoc(doc(db, 'users', uid), { isBanned, banUntil });
+};
+
+// ─── Appeal Management ────────────────────────────────────
+export interface AppealRecord {
+  id: string;
+  uid: string;
+  nickname: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: any;
+}
+
+export const getAppeals = async (): Promise<AppealRecord[]> => {
+  const q = query(collection(db, 'appeals'), orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as AppealRecord));
+};
+
+export const resolveAppeal = async (appealId: string, uid: string, decision: 'approved' | 'rejected') => {
+  await runTransaction(db, async (t) => {
+    const appealRef = doc(db, 'appeals', appealId);
+    const userRef = doc(db, 'users', uid);
+
+    t.update(appealRef, { status: decision });
+    if (decision === 'approved') {
+      t.update(userRef, { isBanned: false, banUntil: null, appealStatus: 'none' });
+    } else {
+      t.update(userRef, { appealStatus: 'rejected' });
+    }
+  });
 };
 
 // ─── Footer Documents (하단 문서) ─────────────────────────

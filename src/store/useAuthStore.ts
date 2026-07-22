@@ -11,6 +11,8 @@ interface UserProfile {
   odong: number;
   role: 'admin' | 'user';
   isBanned: boolean;
+  banUntil?: number | null; // Unix timestamp
+  appealStatus?: 'none' | 'pending' | 'rejected';
   items?: string[];
   purchasedStickers?: string[];
 }

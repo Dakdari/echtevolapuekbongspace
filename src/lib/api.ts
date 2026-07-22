@@ -201,9 +201,20 @@ export const createPost = async (
     
     let authorRole: string | undefined;
     if (postData.authorUid) {
-      const userDoc = await transaction.get(doc(db, 'users', postData.authorUid));
-      if (userDoc.exists() && userDoc.data().role === 'admin') {
-        authorRole = 'admin';
+      const userRef = doc(db, 'users', postData.authorUid);
+      const userDoc = await transaction.get(userRef);
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.isBanned) {
+          if (userData.banUntil && Date.now() > userData.banUntil) {
+            transaction.update(userRef, { isBanned: false, banUntil: null, appealStatus: 'none' });
+          } else {
+            throw new Error('USER_BANNED');
+          }
+        }
+        if (userData.role === 'admin') {
+          authorRole = 'admin';
+        }
       }
     }
 
@@ -418,11 +429,23 @@ export const createComment = async (
   await runTransaction(db, async (t) => {
     let authorRole: string | undefined;
     if (commentData.authorUid) {
-      const userDoc = await t.get(doc(db, 'users', commentData.authorUid));
-      if (userDoc.exists() && userDoc.data().role === 'admin') {
-        authorRole = 'admin';
+      const userRef = doc(db, 'users', commentData.authorUid);
+      const userDoc = await t.get(userRef);
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.isBanned) {
+          if (userData.banUntil && Date.now() > userData.banUntil) {
+            t.update(userRef, { isBanned: false, banUntil: null, appealStatus: 'none', odong: increment(odong) });
+          } else {
+            throw new Error('USER_BANNED');
+          }
+        } else {
+          t.update(userRef, { odong: increment(odong) });
+        }
+        if (userData.role === 'admin') {
+          authorRole = 'admin';
+        }
       }
-      t.update(doc(db, 'users', commentData.authorUid), { odong: increment(odong) });
     }
     t.update(postRef, { commentCount: increment(1) });
     
@@ -505,3 +528,28 @@ export const purchaseStickerPack = async (uid: string, packId: string, price: nu
   });
 };
 
+// ─── Appeal ───────────────────────────────────────────────
+export const submitAppeal = async (uid: string, nickname: string, reason: string) => {
+  const userRef = doc(db, 'users', uid);
+  await runTransaction(db, async (t) => {
+    const userDoc = await t.get(userRef);
+    if (!userDoc.exists()) throw new Error('USER_NOT_FOUND');
+    const data = userDoc.data();
+    if (!data.isBanned) throw new Error('NOT_BANNED');
+    if (data.banUntil) throw new Error('ONLY_INDEFINITE_BANS_CAN_APPEAL');
+    if (data.appealStatus === 'pending' || data.appealStatus === 'rejected') {
+      throw new Error('ALREADY_APPEALED');
+    }
+
+    const appealRef = doc(collection(db, 'appeals'));
+    t.set(appealRef, {
+      uid,
+      nickname,
+      reason,
+      status: 'pending',
+      createdAt: serverTimestamp()
+    });
+
+    t.update(userRef, { appealStatus: 'pending' });
+  });
+};

@@ -9,10 +9,10 @@ import {
   toggleAdBanner, deleteAdBanner,
   getProfanityList, updateProfanityList,
   createBoard, deleteBoard,
-  getUsers, updateUserRole, toggleUserBan,
+  getUsers, updateUserRole, updateUserBan, getAppeals, resolveAppeal,
   getFooterDocuments, createFooterDocument, updateFooterDocument, deleteFooterDocument,
 } from '../lib/adminApi';
-import type { SiteSettings, BoardSettings, AdBanner, UserRecord, FooterDocument } from '../lib/adminApi';
+import type { SiteSettings, BoardSettings, AdBanner, UserRecord, FooterDocument, AppealRecord } from '../lib/adminApi';
 import { clearBadWordsCache } from '../utils/filter';
 import RichEditor from '../components/common/RichEditor';
 import './Admin.css';
@@ -31,7 +31,7 @@ interface HomeWidget {
 
 const Admin: React.FC = () => {
   const { profile, loading: authLoading } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'boards' | 'ads' | 'users' | 'settings' | 'profanity' | 'market' | 'pages'>('boards');
+  const [activeTab, setActiveTab] = useState<'boards' | 'ads' | 'users' | 'settings' | 'profanity' | 'market' | 'pages' | 'appeals'>('boards');
   const globalSettings = useSettingsStore();
 
   // ── Site Settings ─────────────────────────────────────
@@ -74,7 +74,10 @@ const Admin: React.FC = () => {
   const [newBoardId, setNewBoardId] = useState('');
   const [newBoardName, setNewBoardName] = useState('');
 
-  // ── Ads ───────────────────────────────────────────────
+  // ── Appeals ───────────────────────────────────────────
+  const [appealList, setAppealList] = useState<AppealRecord[]>([]);
+
+  // ── Load Initial Data ───────────────────────────────────────────────
   const [adTitle, setAdTitle] = useState('');
   const [adFile, setAdFile] = useState<File | null>(null);
   const [adLink, setAdLink] = useState('');
@@ -120,6 +123,7 @@ const Admin: React.FC = () => {
     getBoards().then(setBoards).catch(console.error);
     setUsersLoading(true);
     getUsers().then(setUserList).catch(console.error).finally(() => setUsersLoading(false));
+    getAppeals().then(setAppealList).catch(console.error);
     getFooterDocuments().then(setFooterDocList).catch(console.error);
   }, []);
 
@@ -452,6 +456,7 @@ const Admin: React.FC = () => {
             { key: 'ads', icon: <ImageIcon size={18} />, label: '자체 광고 관리' },
             { key: 'profanity', icon: <Shield size={18} />, label: '금칙어 관리' },
             { key: 'users', icon: <Users size={18} />, label: '회원 관리' },
+            { key: 'appeals', icon: <Shield size={18} />, label: '항소 관리' },
             { key: 'pages', icon: <FileText size={18} />, label: '하단 문서 관리' },
             { key: 'settings', icon: <Settings size={18} />, label: '사이트 설정' },
           ].map(tab => (
@@ -802,7 +807,11 @@ const Admin: React.FC = () => {
                             </td>
                             <td style={{ padding: '0.6rem 0.5rem' }}>
                               {u.isBanned
-                                ? <span style={{ color: '#ef4444', fontWeight: 600 }}>차단됨</span>
+                                ? (
+                                  <span style={{ color: '#ef4444', fontWeight: 600 }}>
+                                    차단됨 {u.banUntil ? `(~${new Date(u.banUntil).toLocaleDateString()})` : '(무기한)'}
+                                  </span>
+                                )
                                 : <span style={{ color: 'var(--color-success)' }}>정상</span>
                               }
                             </td>
@@ -842,17 +851,120 @@ const Admin: React.FC = () => {
                                     cursor: 'pointer'
                                   }}
                                   onClick={async () => {
-                                    const action = u.isBanned ? '차단 해제' : '차단';
-                                    if (!confirm(`${u.nickname}님을 ${action}하시겠습니까?`)) return;
-                                    try {
-                                      await toggleUserBan(u.uid, !u.isBanned);
-                                      setUserList(prev => prev.map(x => x.uid === u.uid ? { ...x, isBanned: !u.isBanned } : x));
-                                    } catch (e: any) { console.error(e); alert(`처리 실패: ${e?.message || e}`); }
+                                    if (u.isBanned) {
+                                      if (!confirm(`${u.nickname}님의 차단을 해제하시겠습니까?`)) return;
+                                      try {
+                                        await updateUserBan(u.uid, false, null);
+                                        setUserList(prev => prev.map(x => x.uid === u.uid ? { ...x, isBanned: false, banUntil: null } : x));
+                                      } catch (e: any) { console.error(e); alert(`처리 실패: ${e?.message || e}`); }
+                                    } else {
+                                      const durationStr = prompt(`${u.nickname}님을 차단합니다.\n차단 기간을 선택하세요.\n1: 1일\n7: 7일\n30: 30일\n0: 무기한`, '7');
+                                      if (durationStr === null) return;
+                                      
+                                      const dur = parseInt(durationStr, 10);
+                                      if (![0, 1, 7, 30].includes(dur)) {
+                                        return alert('올바른 값을 입력해주세요 (0, 1, 7, 30).');
+                                      }
+                                      
+                                      const banUntil = dur === 0 ? null : Date.now() + dur * 24 * 60 * 60 * 1000;
+                                      try {
+                                        await updateUserBan(u.uid, true, banUntil);
+                                        setUserList(prev => prev.map(x => x.uid === u.uid ? { ...x, isBanned: true, banUntil } : x));
+                                      } catch (e: any) { console.error(e); alert(`처리 실패: ${e?.message || e}`); }
+                                    }
                                   }}
                                 >
                                   {u.isBanned ? '차단해제' : '차단'}
                                 </button>
                               </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* ─── 항소 관리 ─────────────────────────────── */}
+          {activeTab === 'appeals' && (
+            <section className="admin-section">
+              <h2>항소 관리</h2>
+              <p className="admin-desc">무기한 차단된 유저의 항소 내용을 확인하고 승인(차단 해제) 또는 기각 처리합니다.</p>
+
+              <div className="admin-card">
+                {appealList.length === 0 ? (
+                  <p style={{ color: 'var(--color-text-muted)' }}>접수된 항소가 없습니다.</p>
+                ) : (
+                  <div className="user-table-wrapper" style={{ overflowX: 'auto' }}>
+                    <table className="user-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--color-border)', textAlign: 'left' }}>
+                          <th style={{ padding: '0.75rem 0.5rem', width: '120px' }}>일시</th>
+                          <th style={{ padding: '0.75rem 0.5rem', width: '150px' }}>닉네임(UID)</th>
+                          <th style={{ padding: '0.75rem 0.5rem' }}>항소 사유</th>
+                          <th style={{ padding: '0.75rem 0.5rem', width: '100px' }}>상태</th>
+                          <th style={{ padding: '0.75rem 0.5rem', width: '140px' }}>처리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {appealList.map(a => (
+                          <tr key={a.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                            <td style={{ padding: '0.6rem 0.5rem', color: 'var(--color-text-muted)' }}>
+                              {a.createdAt?.toDate ? a.createdAt.toDate().toLocaleString() : ''}
+                            </td>
+                            <td style={{ padding: '0.6rem 0.5rem' }}>
+                              <div style={{ fontWeight: 600 }}>{a.nickname}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{a.uid.slice(0,8)}...</div>
+                            </td>
+                            <td style={{ padding: '0.6rem 0.5rem', whiteSpace: 'pre-wrap' }}>
+                              {a.reason}
+                            </td>
+                            <td style={{ padding: '0.6rem 0.5rem' }}>
+                              {a.status === 'pending' ? <span style={{ color: '#eab308' }}>대기중</span> :
+                               a.status === 'approved' ? <span style={{ color: 'var(--color-success)' }}>승인됨</span> :
+                               <span style={{ color: '#ef4444' }}>기각됨</span>}
+                            </td>
+                            <td style={{ padding: '0.6rem 0.5rem' }}>
+                              {a.status === 'pending' && (
+                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                  <button
+                                    className="btn-sm"
+                                    style={{
+                                      padding: '0.25rem 0.6rem', fontSize: '0.75rem',
+                                      border: '1px solid var(--color-success)', background: 'rgba(16,185,129,0.08)',
+                                      color: 'var(--color-success)', cursor: 'pointer', borderRadius: 'var(--radius-sm)'
+                                    }}
+                                    onClick={async () => {
+                                      if (!confirm(`${a.nickname}님의 항소를 인용(차단 해제)하시겠습니까?`)) return;
+                                      try {
+                                        await resolveAppeal(a.id, a.uid, 'approved');
+                                        setAppealList(prev => prev.map(x => x.id === a.id ? { ...x, status: 'approved' } : x));
+                                        // Update user list if visible
+                                        setUserList(prev => prev.map(x => x.uid === a.uid ? { ...x, isBanned: false, banUntil: null, appealStatus: 'none' } : x));
+                                      } catch (e: any) { console.error(e); alert('실패: ' + e?.message); }
+                                    }}
+                                  >승인(해제)</button>
+                                  <button
+                                    className="btn-sm"
+                                    style={{
+                                      padding: '0.25rem 0.6rem', fontSize: '0.75rem',
+                                      border: '1px solid #ef4444', background: 'rgba(239,68,68,0.08)',
+                                      color: '#ef4444', cursor: 'pointer', borderRadius: 'var(--radius-sm)'
+                                    }}
+                                    onClick={async () => {
+                                      if (!confirm(`${a.nickname}님의 항소를 기각하시겠습니까? (이후 재항소 불가)`)) return;
+                                      try {
+                                        await resolveAppeal(a.id, a.uid, 'rejected');
+                                        setAppealList(prev => prev.map(x => x.id === a.id ? { ...x, status: 'rejected' } : x));
+                                        setUserList(prev => prev.map(x => x.uid === a.uid ? { ...x, appealStatus: 'rejected' } : x));
+                                      } catch (e: any) { console.error(e); alert('실패: ' + e?.message); }
+                                    }}
+                                  >기각</button>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         ))}
