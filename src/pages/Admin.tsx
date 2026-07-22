@@ -858,12 +858,12 @@ const Admin: React.FC = () => {
                                         setUserList(prev => prev.map(x => x.uid === u.uid ? { ...x, isBanned: false, banUntil: null } : x));
                                       } catch (e: any) { console.error(e); alert(`처리 실패: ${e?.message || e}`); }
                                     } else {
-                                      const durationStr = prompt(`${u.nickname}님을 차단합니다.\n차단 기간을 선택하세요.\n1: 1일\n7: 7일\n30: 30일\n0: 무기한`, '7');
+                                      const durationStr = prompt(`${u.nickname}님을 차단합니다.\n차단 일수를 정수로 입력하세요 (0 ~ 10000).\n(0을 입력하면 무기한 차단됩니다)`, '7');
                                       if (durationStr === null) return;
                                       
                                       const dur = parseInt(durationStr, 10);
-                                      if (![0, 1, 7, 30].includes(dur)) {
-                                        return alert('올바른 값을 입력해주세요 (0, 1, 7, 30).');
+                                      if (isNaN(dur) || dur < 0 || dur > 10000) {
+                                        return alert('올바른 값을 입력해주세요 (0 ~ 10000 사이의 정수).');
                                       }
                                       
                                       const banUntil = dur === 0 ? null : Date.now() + dur * 24 * 60 * 60 * 1000;
